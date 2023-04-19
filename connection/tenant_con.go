@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/MK-Solutions-LTDA/common-utils/cache"
 	_ "github.com/lib/pq"
 )
 
@@ -17,11 +19,12 @@ type Connection struct {
 }
 
 func GetTenantConnection(tenant string) (Connection, error) {
-	Mutex.Lock()
-	defer Mutex.Unlock()
+	cache.Mutex.Lock()
+	defer cache.Mutex.Unlock()
 
 	// Verifica se já existe uma conexão no cache para o tenant
-	if conn, found := Connections.Get(prefixConnection + tenant); found {
+	if conn, found := cache.Connections.Get(prefixConnection + tenant); found {
+		log.Println("Found connection in cache for tenant ", tenant)
 		return conn.(Connection), nil
 	}
 
@@ -36,6 +39,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 		return Connection{}, err
 	}
 
+	log.Println("Connection create for tenant ", tenant)
 	// Configura o search_path para usar o tenant
 	_, err = dbCon.Exec(fmt.Sprintf("SET search_path TO %s", tenant))
 	if err != nil {
@@ -44,7 +48,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 
 	// Salva a conexão no cache
 	connection := Connection{DB: dbCon, SearchPath: tenant}
-	Connections.SetWithTTL(prefixConnection+tenant, connection, 1, 1*time.Hour)
+	cache.Connections.SetWithTTL(prefixConnection+tenant, connection, 1, 1*time.Hour)
 
 	return connection, nil
 }

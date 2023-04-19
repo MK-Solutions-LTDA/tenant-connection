@@ -7,18 +7,11 @@ import (
 	"log"
 	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 var ErrRecordNotFound = errors.New("record not found")
 
 type Catalog struct {
-	ID           uuid.UUID
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
-	DeletedAt    sql.NullTime
-	TenantID     string
 	Driver       string
 	UserName     string
 	Password     string
@@ -32,7 +25,7 @@ var (
 	once      sync.Once
 )
 
-func connect(url string) {
+func Connect(url string) {
 	var err error
 	log.Println("vai conectar em: ", url)
 	dbCatalog, err = sql.Open("postgres", url+"?sslmode=disable")
@@ -40,19 +33,10 @@ func connect(url string) {
 		log.Println("erro aqui?")
 		panic(err)
 	}
-
-	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	// defer cancel()
-
-	// err = dbCatalog.PingContext(ctx)
-	// if err != nil {
-	// 	log.Println("ou aqui")
-	// 	panic(err)
-	// }
 }
 
-func GetConnection(url string) *sql.DB {
-	once.Do(func() { connect(url) })
+func GetCatalogConnection(url string) *sql.DB {
+	once.Do(func() { Connect(url) })
 	return dbCatalog
 }
 
