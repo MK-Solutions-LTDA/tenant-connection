@@ -7,6 +7,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 var ErrRecordNotFound = errors.New("record not found")
