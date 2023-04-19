@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"sync"
 	"time"
 
@@ -33,8 +34,10 @@ var (
 
 func connect(url string) {
 	var err error
+	log.Println("vai conectar em: ", url)
 	dbCatalog, err = sql.Open("postgres", url+"?sslmode=disable")
 	if err != nil {
+		log.Println("erro aqui?")
 		panic(err)
 	}
 
@@ -43,6 +46,7 @@ func connect(url string) {
 
 	err = dbCatalog.PingContext(ctx)
 	if err != nil {
+		log.Println("ou aqui")
 		panic(err)
 	}
 }
