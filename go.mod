@@ -1,10 +1,9 @@
-module github.com/MK-Solutions-LTDA/tenant-connection
+module github.com/MK-Solutions-LTDA/common-utils
 
 go 1.20
 
 require (
 	github.com/dgraph-io/ristretto v0.1.1
-	github.com/google/uuid v1.3.0
 	github.com/lib/pq v1.10.8
 )
 
