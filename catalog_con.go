@@ -41,14 +41,14 @@ func connect(url string) {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// defer cancel()
 
-	err = dbCatalog.PingContext(ctx)
-	if err != nil {
-		log.Println("ou aqui")
-		panic(err)
-	}
+	// err = dbCatalog.PingContext(ctx)
+	// if err != nil {
+	// 	log.Println("ou aqui")
+	// 	panic(err)
+	// }
 }
 
 func GetConnection(url string) *sql.DB {
