@@ -5,9 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
-
-	_ "github.com/lib/pq"
 )
 
 const prefixConnection = "con-"
@@ -23,6 +22,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 
 	// Verifica se já existe uma conexão no cache para o tenant
 	if conn, found := Connections.Get(prefixConnection + tenant); found {
+		log.Println("Found connection in cache for tenant ", tenant)
 		return conn.(Connection), nil
 	}
 
@@ -37,6 +37,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 		return Connection{}, err
 	}
 
+	log.Println("Connection create for tenant ", tenant)
 	// Configura o search_path para usar o tenant
 	_, err = dbCon.Exec(fmt.Sprintf("SET search_path TO %s", tenant))
 	if err != nil {
