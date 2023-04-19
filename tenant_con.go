@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"common-utils/cache"
 	"context"
 	"database/sql"
 	"fmt"
@@ -17,7 +16,7 @@ type Connection struct {
 }
 
 func GetTenantConnection(tenant string) (Connection, error) {
-	cache.Mutex.Lock()
+	Mutex.Lock()
 	defer Mutex.Unlock()
 
 	// Verifica se já existe uma conexão no cache para o tenant

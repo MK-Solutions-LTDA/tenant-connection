@@ -1,11 +1,8 @@
-module github.com/MK-Solutions-LTDA/common-utils
+module github.com/MK-Solutions-LTDA/tenant-connection
 
 go 1.20
 
-require (
-	github.com/dgraph-io/ristretto v0.1.1
-	github.com/lib/pq v1.10.8
-)
+require github.com/dgraph-io/ristretto v0.1.1
 
 require (
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
