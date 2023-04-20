@@ -1,9 +1,9 @@
 # Tenant Connection
 
-Este repositório contém código para gerenciar a conexão de inquilinos em um 
+Este repositório contém código para gerenciar a conexão de tenants em um 
 aplicativo em Go. Ele fornece uma maneira fácil de estabelecer uma conexão 
-segura com um banco de dados de catálogo e encapsular a conexão de inquilino 
-para facilitar o acesso aos dados do inquilino.
+segura com um banco de dados de catálogo e encapsular a conexão de tenant 
+para facilitar o acesso aos dados do tenant.
 
 ## Como usar
 
@@ -24,7 +24,7 @@ func main() {
 
 --
 
-Também é necessário "encapsular" a conexão de inquilino da seguinte forma:
+Também é necessário "encapsular" a conexão de tenant da seguinte forma:
 
 > Arquivo tenant.go
 
