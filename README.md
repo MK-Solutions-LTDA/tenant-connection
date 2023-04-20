@@ -2,13 +2,13 @@
 
 Este repositório contém código para gerenciar a conexão de tenants em um 
 aplicativo em Go. Ele fornece uma maneira fácil de estabelecer uma conexão 
-segura com um banco de dados de catálogo e encapsular a conexão de tenant 
-para facilitar o acesso aos dados do tenant.
+segura com um banco de dados de catálogo e encapsular a conexão para facilitar 
+o acesso aos dados do tenant.
 
 ## Como usar
 
 Para iniciar o aplicativo em Go, é necessário chamar a conexão com o catálogo, 
-passando a variável de ambiente com o endereço do banco de dados de catálogo. 
+passando a variável de ambiente com o endereço do banco de dados. 
 Por exemplo:
 
 > Arquivo main.go
