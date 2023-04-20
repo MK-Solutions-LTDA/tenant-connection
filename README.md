@@ -49,7 +49,8 @@ func GetTenantConnection(tenant string) (*db.Queries, error) {
 }
 ```
 
-Para chamar a funcao `GetTenantConnection` basta fazer:
+Para chamar a funcao `GetTenantConnection` basta passar o tenant <string>
+como parâmetro
 
 ```go
 db, err := dbutils.GetTenantConnection(tenant)
