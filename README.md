@@ -22,7 +22,6 @@ func main() {
 }
 ```
 
---
 
 Também é necessário "encapsular" a conexão de tenant da seguinte forma:
 
