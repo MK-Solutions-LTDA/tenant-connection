@@ -48,7 +48,7 @@ func GetTenantConnection(tenant string) (*db.Queries, error) {
 }
 ```
 
-Para chamar a funcao `GetTenantConnection` basta passar o tenant <string>
+Para chamar a funcao `GetTenantConnection` basta passar o tenant
 como parâmetro:
 
 ```go
