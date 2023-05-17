@@ -29,12 +29,12 @@ var (
 
 func Connect(url string) {
 	var err error
-	log.Println("vai conectar em: ", url)
+
 	dbCatalog, err = sql.Open("postgres", url+"?sslmode=disable")
 	if err != nil {
-		log.Println("erro aqui?")
 		panic(err)
 	}
+	log.Println("Catalog database connection estabilished:", url)
 }
 
 func GetCatalogConnection(url string) *sql.DB {
