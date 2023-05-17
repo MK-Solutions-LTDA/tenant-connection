@@ -23,7 +23,6 @@ func GetTenantConnection(tenant string) (Connection, error) {
 
 	// Verifica se já existe uma conexão no cache para o tenant
 	if conn, found := Connections.Get(prefixConnection + tenant); found {
-		log.Println("Found connection in cache for tenant ", tenant)
 		return conn.(Connection), nil
 	}
 
