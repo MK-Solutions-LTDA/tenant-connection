@@ -42,7 +42,7 @@ func GetCatalogConnection(url string) *sql.DB {
 	return dbCatalog
 }
 
-func GetTenant(ctx context.Context, tenant string) (*Catalog, error) {
+func GetTenant(tenant string) (*Catalog, error) {
 	query := `
         SELECT driver, user_name, password, server, database_name, schema_name
         FROM catalog

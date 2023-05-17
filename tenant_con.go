@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -26,7 +25,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 		return conn.(Connection), nil
 	}
 
-	catalog, err := GetTenant(context.Background(), tenant)
+	catalog, err := GetTenant(tenant)
 	if err != nil {
 		return Connection{}, err
 	}
