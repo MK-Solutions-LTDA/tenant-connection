@@ -46,6 +46,8 @@ func GetTenantConnection(tenant string) (Connection, error) {
 	// Salva a conexão no cache
 	connection := Connection{DB: dbCon, SearchPath: tenant}
 	Connections.SetWithTTL(prefixConnection+tenant, connection, 1, 1*time.Hour)
+	connection.DB.SetConnMaxLifetime(1 * time.Hour)
+	connection.DB.SetConnMaxIdleTime(1 * time.Hour)
 
 	return connection, nil
 }
