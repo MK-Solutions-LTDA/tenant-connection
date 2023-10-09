@@ -40,6 +40,7 @@ func GetTenantConnection(tenant string) (Connection, error) {
 	// Configura o search_path para usar o tenant
 	_, err = dbCon.Exec(fmt.Sprintf("SET search_path TO %s", tenant))
 	if err != nil {
+		log.Println("Connection create for error  ", err)
 		return Connection{}, err
 	}
 
