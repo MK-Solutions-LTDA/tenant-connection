@@ -34,7 +34,7 @@ func Connect(url string) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("Catalog database connection estabilished:", url)
+	log.Println("Catalog database connection estabilished")
 }
 
 func GetCatalogConnection(url string) *sql.DB {
