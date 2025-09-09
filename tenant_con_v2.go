@@ -189,7 +189,8 @@ func (tc *TenantConnectionV2) Close() error {
 	}
 
 	err := tc.DB.Close()
-	tc.DB = nil
+	// ⚠️ CRÍTICO: NÃO setar tc.DB = nil para evitar panic no SQLC
+	// Apenas marcar como fechada
 	tc.closed = true
 	log.Printf("TenantConnectionV2 closed for tenant: %s", tc.Options.Tenant)
 	return err
@@ -225,6 +226,7 @@ func (tc *TenantConnectionV2) GetDB() *sql.DB {
 	tc.mu.RLock()
 	defer tc.mu.RUnlock()
 
+	// Se foi fechada, retorna nil mas mantém tc.DB intacto para evitar panic no SQLC
 	if tc.closed {
 		return nil
 	}
@@ -240,16 +242,15 @@ func NewSqlcWithTenantConnection[T any](ctx context.Context, factory SqlcFactory
 		return zero, nil, err
 	}
 
-	// ⚠️ IMPORTANTE: Passamos tc.DB diretamente aqui, mas isso pode ser perigoso
-	// O SQLC vai guardar referência para tc.DB que pode virar nil
-	// A solução ideal seria criar um wrapper, mas por compatibilidade mantemos assim
-	// e protegemos no Close() e GetDB()
+	// Verifica se a conexão é válida
 	db := tenantConn.GetDB()
 	if db == nil {
 		var zero T
 		return zero, nil, fmt.Errorf("failed to get valid database connection")
 	}
 
+	// Por enquanto, passamos a DB diretamente mas com verificações robustas
+	// TODO: Implementar wrapper completo no futuro se necessário
 	return factory(db), tenantConn, nil
 }
 
