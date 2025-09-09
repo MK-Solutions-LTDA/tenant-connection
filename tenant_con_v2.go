@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -29,6 +30,8 @@ type TenantConnectionV2 struct {
 	SearchPath string
 	Options    TenantConnectOptions
 	createdAt  time.Time
+	mu         sync.RWMutex // Protege contra race conditions
+	closed     bool         // Flag para saber se foi fechada
 }
 
 // QueryLogger função para log de queries
@@ -169,7 +172,11 @@ func (tc *TenantConnectionV2) Close() error {
 		return nil
 	}
 
-	if tc.DB == nil {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+
+	// Verifica se já foi fechada
+	if tc.closed || tc.DB == nil {
 		return nil
 	}
 
@@ -183,21 +190,46 @@ func (tc *TenantConnectionV2) Close() error {
 
 	err := tc.DB.Close()
 	tc.DB = nil
+	tc.closed = true
 	log.Printf("TenantConnectionV2 closed for tenant: %s", tc.Options.Tenant)
 	return err
 }
 
 // IsHealthy verifica se a conexão está saudável
 func (tc *TenantConnectionV2) IsHealthy(ctx context.Context) bool {
-	if tc.DB == nil {
+	if tc == nil {
 		return false
 	}
+
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
+
+	if tc.closed || tc.DB == nil {
+		return false
+	}
+
 	return tc.DB.PingContext(ctx) == nil
 }
 
 // GetAge retorna a idade da conexão
 func (tc *TenantConnectionV2) GetAge() time.Duration {
 	return time.Since(tc.createdAt)
+}
+
+// GetDB retorna o *sql.DB de forma thread-safe
+func (tc *TenantConnectionV2) GetDB() *sql.DB {
+	if tc == nil {
+		return nil
+	}
+
+	tc.mu.RLock()
+	defer tc.mu.RUnlock()
+
+	if tc.closed {
+		return nil
+	}
+
+	return tc.DB
 }
 
 // NewSqlcWithTenantConnection cria uma instância do sqlc com conexão de tenant
@@ -207,7 +239,18 @@ func NewSqlcWithTenantConnection[T any](ctx context.Context, factory SqlcFactory
 		var zero T
 		return zero, nil, err
 	}
-	return factory(tenantConn.DB), tenantConn, nil
+
+	// ⚠️ IMPORTANTE: Passamos tc.DB diretamente aqui, mas isso pode ser perigoso
+	// O SQLC vai guardar referência para tc.DB que pode virar nil
+	// A solução ideal seria criar um wrapper, mas por compatibilidade mantemos assim
+	// e protegemos no Close() e GetDB()
+	db := tenantConn.GetDB()
+	if db == nil {
+		var zero T
+		return zero, nil, fmt.Errorf("failed to get valid database connection")
+	}
+
+	return factory(db), tenantConn, nil
 }
 
 // GetConnection segue o mesmo padrão do seu outro projeto
@@ -244,6 +287,11 @@ func GetConnectionFromContext[T any](ctx context.Context, factory SqlcFactory[T]
 
 // ExecWithTenantLog executa uma query com log para tenant
 func (tc *TenantConnectionV2) ExecWithLog(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	db := tc.GetDB()
+	if db == nil {
+		return nil, fmt.Errorf("connection is closed or invalid")
+	}
+
 	start := time.Now()
 	logger := tc.Options.QueryLogger
 	if logger == nil {
@@ -254,13 +302,18 @@ func (tc *TenantConnectionV2) ExecWithLog(ctx context.Context, query string, arg
 		logger(ctx, query, args...)
 	}
 
-	res, err := tc.DB.ExecContext(ctx, query, args...)
+	res, err := db.ExecContext(ctx, query, args...)
 	fmt.Printf("[TenantExec][%s] Took: %s | Error: %v\n", tc.SearchPath, time.Since(start), err)
 	return res, err
 }
 
 // QueryWithTenantLog executa uma query com log para tenant
 func (tc *TenantConnectionV2) QueryWithLog(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	db := tc.GetDB()
+	if db == nil {
+		return nil, fmt.Errorf("connection is closed or invalid")
+	}
+
 	start := time.Now()
 	logger := tc.Options.QueryLogger
 	if logger == nil {
@@ -271,13 +324,20 @@ func (tc *TenantConnectionV2) QueryWithLog(ctx context.Context, query string, ar
 		logger(ctx, query, args...)
 	}
 
-	rows, err := tc.DB.QueryContext(ctx, query, args...)
+	rows, err := db.QueryContext(ctx, query, args...)
 	fmt.Printf("[TenantQuery][%s] Took: %s | Error: %v\n", tc.SearchPath, time.Since(start), err)
 	return rows, err
 }
 
 // QueryRowWithTenantLog executa uma query row com log para tenant
 func (tc *TenantConnectionV2) QueryRowWithLog(ctx context.Context, query string, args ...any) *sql.Row {
+	db := tc.GetDB()
+	if db == nil {
+		// Para QueryRow, retornamos um Row que vai dar erro no Scan()
+		// Isso mantém a interface compatível
+		return &sql.Row{}
+	}
+
 	logger := tc.Options.QueryLogger
 	if logger == nil {
 		logger = defaultLogger
@@ -287,7 +347,7 @@ func (tc *TenantConnectionV2) QueryRowWithLog(ctx context.Context, query string,
 		logger(ctx, query, args...)
 	}
 
-	return tc.DB.QueryRowContext(ctx, query, args...)
+	return db.QueryRowContext(ctx, query, args...)
 }
 
 // CloseAllTenantConnections fecha todas as conexões v2 de tenants no cache
