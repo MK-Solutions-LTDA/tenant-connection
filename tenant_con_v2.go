@@ -153,12 +153,17 @@ func GetTenantConnectionV2(ctx context.Context, opts TenantConnectOptions) (*Ten
 
 // Close fecha a conexão do tenant
 func (tc *TenantConnectionV2) Close() error {
+	// Verificação robusta para evitar panics
+	if tc == nil {
+		return nil
+	}
+
 	if tc.DB == nil {
 		return nil
 	}
 
 	// Remove do cache se estava sendo usado
-	if tc.Options.CacheEnabled {
+	if tc.Options.CacheEnabled && Connections != nil {
 		Mutex.Lock()
 		cacheKey := prefixConnection + "v2-" + tc.Options.Tenant
 		Connections.Del(cacheKey)
