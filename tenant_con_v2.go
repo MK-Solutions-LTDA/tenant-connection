@@ -111,21 +111,26 @@ func GetTenantConnectionV2(ctx context.Context, opts TenantConnectOptions) (*Ten
 	db.SetConnMaxIdleTime(opts.ConnMaxIdle)
 	db.SetConnMaxLifetime(opts.ConnMaxLifetime)
 
+	// Usa context independente para configuração inicial
+	// Isso evita que context timeout do usuário cancele a configuração da conexão
+	setupCtx, setupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer setupCancel()
+
 	// Testa a conexão
-	if err := db.PingContext(ctx); err != nil {
+	if err := db.PingContext(setupCtx); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to ping database for tenant %s: %w", opts.Tenant, err)
 	}
 
 	// Configura o search_path para o tenant
-	if _, err := db.ExecContext(ctx, fmt.Sprintf("SET search_path TO %s", opts.Tenant)); err != nil {
+	if _, err := db.ExecContext(setupCtx, fmt.Sprintf("SET search_path TO %s", opts.Tenant)); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("failed to set search_path for tenant %s: %w", opts.Tenant, err)
 	}
 
 	// Força UTC se solicitado
 	if opts.ForceUTC {
-		if _, err := db.ExecContext(ctx, "SET TIMEZONE='UTC'"); err != nil {
+		if _, err := db.ExecContext(setupCtx, "SET TIMEZONE='UTC'"); err != nil {
 			db.Close()
 			return nil, fmt.Errorf("failed to set timezone for tenant %s: %w", opts.Tenant, err)
 		}
@@ -137,6 +142,12 @@ func GetTenantConnectionV2(ctx context.Context, opts TenantConnectOptions) (*Ten
 		SearchPath: opts.Tenant,
 		Options:    opts,
 		createdAt:  time.Now(),
+	}
+
+	// Valida uma última vez se a conexão está realmente funcional
+	if err := tenantConn.DB.PingContext(setupCtx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("final connection validation failed for tenant %s: %w", opts.Tenant, err)
 	}
 
 	// Salva no cache se habilitado
