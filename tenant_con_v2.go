@@ -116,7 +116,7 @@ func GetTenantConnectionV2(ctx context.Context, opts TenantConnectOptions) (*Ten
 
 	// Usa context independente para configuração inicial
 	// Isso evita que context timeout do usuário cancele a configuração da conexão
-	setupCtx, setupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	setupCtx, setupCancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer setupCancel()
 
 	// Testa a conexão
