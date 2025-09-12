@@ -161,7 +161,6 @@ func GetTenantConnectionV2(ctx context.Context, opts TenantConnectOptions) (*Ten
 		Mutex.Unlock()
 	}
 
-	log.Printf("TenantConnectionV2 created for tenant: %s", opts.Tenant)
 	return tenantConn, nil
 }
 
@@ -192,7 +191,6 @@ func (tc *TenantConnectionV2) Close() error {
 	// ⚠️ CRÍTICO: NÃO setar tc.DB = nil para evitar panic no SQLC
 	// Apenas marcar como fechada
 	tc.closed = true
-	log.Printf("TenantConnectionV2 closed for tenant: %s", tc.Options.Tenant)
 	return err
 }
 
